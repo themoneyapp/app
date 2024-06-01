@@ -1,0 +1,1 @@
+"""themoneyapp.core package root."""

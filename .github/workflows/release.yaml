@@ -1,0 +1,109 @@
+name: Make Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  should_run:
+    runs-on: ubuntu-latest
+    if: |
+      github.repository == 'themoneyapp/app' &&
+      github.ref == 'refs/heads/main'
+
+    steps:
+      - run: echo "starting execution"
+
+  lint:
+    name: Perform Lint
+    needs: [should_run]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'skipped') &&
+      !contains(needs.*.result, 'failure')
+
+    uses: ./.github/workflows/_perform_lint.yaml
+
+  test:
+    name: Perform Test
+    needs: [should_run]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'skipped') &&
+      !contains(needs.*.result, 'failure')
+
+    uses: ./.github/workflows/_perform_test.yaml
+
+  format:
+    name: Perform Format
+    needs: [test, lint]
+
+    if: |
+      always() &&
+      !contains(needs.*.result, 'skipped') &&
+      !contains(needs.*.result, 'failure')
+
+    concurrency: push
+
+    uses: ./.github/workflows/_perform_format.yaml
+    secrets: inherit
+    with:
+      apply_changes: true
+
+  release:
+    name: Make Release
+    needs: [format]
+
+    runs-on: ubuntu-latest
+
+    # Make the release only on the main branch
+    # TODO: update the condition when we start making pre-releases
+    if: |
+      always() &&
+      !contains(needs.*.result, 'skipped') &&
+      !contains(needs.*.result, 'failure')
+
+    concurrency: push
+    permissions:
+      id-token: write
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          # force pull the ref_name (branch name) again
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Python Semantic Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          root_options: "-vv"
+
+      - name: Publish package distributions to GitHub Releases
+        id: github-release
+
+        # NOTE: DO NOT wrap the conditional in ${{ }} as it will always evaluate to true.
+        # See https://github.com/actions/runner/issues/1173
+        if: steps.release.outputs.released == 'true'
+        uses: python-semantic-release/upload-to-gh-release@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
+          root_options: "-vv"
+
+      - name: invoke publish workflow
+        if: steps.release.outputs.released == 'true'
+        run: |
+          gh workflow run publish.yaml --ref ${{ steps.release.outputs.tag }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

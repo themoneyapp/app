@@ -1,0 +1,499 @@
+# build-system
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# poetry
+[tool.poetry]
+package-mode = false
+name = "themoneyapp"
+version = "0.1.0"
+description = "The Money App"
+readme = "README.md"
+authors = [
+    "Subham Agarwal <subhamagr@users.noreply.github.com>",
+]
+maintainers = []
+# links
+homepage = "https://github.com/themoneyapp/app"
+repository = "https://github.com/themoneyapp/app"
+documentation = "https://github.com/themoneyapp/app"
+# Meta
+keywords = ["django", "docker", "poetry", "money", "accounting"]
+classifiers = []
+
+[tool.poetry.urls]
+# adding this section to avoid poetry formating issues
+"Bug Tracker" = "https://github.com/subhamagr/app/issues"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typing_extensions = "^4.11.0"
+argon2-cffi = "^23.1.0"
+structlog = "^24.1.0"
+rich = "^13.7.1"
+django = "^5.0.6"
+dj-database-url = "^2.1.0"
+django-structlog = "^8.0.0"
+django-redis = "^5.4.0"
+django-allauth = {extras = ["mfa"], version = "^0.63.1"}
+django-rest-framework = "^0.1.0"
+django-cors-headers = "^4.3.1"
+django-stubs-ext = "^5.0.0"
+drf-spectacular = "^0.27.2"
+django-webpack-loader = "^3.1.0"
+pydantic = {extras = ["email"], version = "^2.7.1"}
+pydantic-settings = "^2.2.1"
+psycopg = {extras = ["c"], version = "^3.1.19"}
+celery = {extras = ["redis"], version = "^5.4.0"}
+gunicorn = "^22.0.0"
+canonicaljson = "^2.0.0"
+whitenoise = {extras = ["brotli"], version = "^6.6.0"}
+uvicorn = "^0.29.0"
+
+[tool.poetry.group.dev.dependencies]
+django-debug-toolbar = "^4.3.0"
+django-extensions = "^3.2.3"
+werkzeug = {extras = ["watchdog"], version = "^3.0.3"}
+watchfiles = "^0.21.0"
+ipdb = "^0.13.13"
+
+[tool.poetry.group.release.dependencies]
+python-semantic-release = "^9.7.1"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.0"
+pytest-django = "^4.8.0"
+pytest-cov = "^5.0.0"
+factory-boy = "^3.3.0"
+django-coverage-plugin = "^3.1.0"
+pytest-pretty = "^1.2.0"
+pytest-clarity = "^1.0.1"
+
+[tool.poetry.group.qa.dependencies]
+mypy = "^1.10.0"
+django-stubs = "^5.0.0"
+djangorestframework-stubs = "^3.15.0"
+djlint = "^1.34.1"
+pre-commit = "^3.7.1"
+ruff = "^0.4.4"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^7.3.7"
+sphinx-autobuild = "^2024.4.16"
+sphinx-rtd-theme = "^2.0.0"
+myst-parser = "^3.0.1"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# ci::semantic_release
+[tool.semantic_release]
+allow_zero_version = true
+major_on_zero = false  # When you are ready to release a stable version, set it to true
+commit_parser = "angular"
+commit_message = "chore(release): v{version} [skip ci]\n\nSee the changelog for changes."
+tag_format = "v{version}"
+
+build_command = ""
+version_variables = [
+    "src/themoneyapp/__init__.py:__version__",
+    'package.json:"version"',
+]
+version_toml = [
+    "pyproject.toml:tool.poetry.version",
+]
+
+[tool.semantic_release.commit_author]
+env = "GIT_COMMIT_AUTHOR"
+default = "semantic-release <semantic-release>"
+
+[tool.semantic_release.branches.main]
+match = "(main|master)"
+#prerelease_token = "rc"
+prerelease = false
+
+[tool.semantic_release.changelog]
+template_dir = "templates"
+changelog_file = "CHANGELOG.md"
+exclude_commit_patterns = []
+
+[tool.semantic_release.changelog.environment]
+block_start_string = "{%"
+block_end_string = "%}"
+variable_start_string = "{{"
+variable_end_string = "}}"
+comment_start_string = "{#"
+comment_end_string = "#}"
+trim_blocks = false
+lstrip_blocks = false
+newline_sequence = "\n"
+keep_trailing_newline = false
+extensions = []
+autoescape = true
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+ignore_token_for_push = false
+
+[semantic_release.remote.token]
+env = "GH_TOKEN"
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = false
+
+# ----------------------------------------------------------------------------------------------------------------------
+# test::pytest Pytest & coverage settings
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-markers",
+    "--cache-clear",
+    # how extra test summary info as specified by chars - (a)ll except passed
+    "-ra",
+    # pytest-django
+    "--ds=config.settings.test",
+    "--nomigrations",
+    "--create-db",
+    # pytest-coverage
+    "--cov",
+    "--cov-context=test",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    # pytest-clarity
+    "--diff-symbols",
+]
+pythonpath = ["src"]
+norecursedirs = ["node_modules"]
+django_debug_mode = true
+junit_family = "xunit1"
+
+[tool.coverage.run]
+source = ["src"]
+plugins = [
+    "django_coverage_plugin",
+]
+omit = [
+    "src/manage.py",
+    "src/**/tests/**/*.*",
+    "src/**/conftest.py",
+    "src/**/migrations/**/*.*",
+]
+data_file = ".pytest/.coverage"
+
+[tool.coverage.html]
+directory = ".pytest/htmlcov"
+
+[tool.coverage.django_coverage_plugin]
+template_extensions = "html, txt, tex, email"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# qa::mypy
+# qa::mypy: global options
+[tool.mypy]
+python_version = "3.10"
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+disallow_untyped_defs = true
+no_implicit_reexport = true
+disallow_any_generics = true
+check_untyped_defs = true
+ignore_missing_imports = true
+follow_imports = "normal"
+warn_return_any = true
+warn_unused_configs = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+implicit_reexport = false
+# NOTE: TOML's single-quoted strings do not require escaping backslashes
+exclude = [
+    '^build',
+    '^dist',
+    '^.*\.egg-info',
+    '.idea',
+    '.mypy.*',
+    '.pytest.*',
+    '.ruff.*',
+]
+plugins = [
+    "pydantic.mypy",
+    "mypy_django_plugin.main",
+    "mypy_drf_plugin.main",
+]
+
+[tool.django-stubs]
+# Docs: https://github.com/typeddjango/django-stubs
+django_settings_module = "config.settings.quality"
+strict_settings = true
+
+# qa::mypy: per-module options:
+[[tool.mypy.overrides]]
+module = [
+    "config.*",
+    "core.*",
+    "themoneyapp.*",
+]
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+    # Django migrations should not produce any errors (they are tested anyway):
+    "themoneyapp.*.migrations.*",
+]
+ignore_errors = true
+
+# ----------------------------------------------------------------------------------------------------------------------
+# qa::djlint https://www.djlint.com/docs/configuration/
+[tool.djlint]
+blank_line_after_tag = "load,extends"
+close_void_tags = true
+format_css = true
+format_js = true
+# TODO: remove T002 when fixed https://github.com/djlint/djLint/issues/687
+ignore = "H006,H030,H031,T002"
+include = "H017,H035"
+indent = 2
+max_line_length = 119
+# https://www.djlint.com/docs/languages/django/
+profile = "django"
+
+[tool.djlint.css]
+indent_size = 2
+
+[tool.djlint.js]
+indent_size = 2
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# qa::ruff https://docs.astral.sh/ruff/settings
+# qa::ruff: global settings
+# https://docs.astral.sh/ruff/settings/#top-level
+[tool.ruff]
+# Allow imports relative to the "src" directories.
+src = ["src"]
+include = [
+    "src/**/*.py",
+    "src/**/*.pyi",
+    "**/pyproject.toml",
+]
+extend-exclude = [
+    ".idea",
+    ".mypy_cache",
+    ".pytest*",
+    ".ruff_cache",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "docs",
+    "node_modules",
+    "venv",
+    # project specific
+    "src/staticfiles/*",
+]
+force-exclude = true
+# Group violations by containing file.
+output-format = "grouped"
+# Disable autofix behavior by-default when running ruff
+fix = false
+unsafe-fixes = false
+# Enumerate all fixed violations.
+show-fixes = true
+# Same as Black and Django: https://github.com/cookiecutter/cookiecutter-django/issues/4792.
+line-length = 88
+indent-width = 4
+# Always generate Python 3.10-compatible code.
+target-version = "py310"
+
+# qa::ruff format base settings
+# https://docs.astral.sh/ruff/settings/#format
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = true
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = 60
+
+# qa::ruff lint base settings
+# https://docs.astral.sh/ruff/settings/#lint
+[tool.ruff.lint]
+exclude = [
+    # exclude django migrations
+    "src/**/migrations/**/*.py",
+]
+select = ["ALL"]
+ignore = [
+    # modules
+    # https://docs.astral.sh/ruff/rules/#flake8-type-checking-tch
+    "TCH",
+    # rules
+    # Deprecated: See https://docs.astral.sh/ruff/rules/missing-type-self/
+    "ANN101",
+    # Deprecated: See https://docs.astral.sh/ruff/rules/missing-type-cls/
+    "ANN102",
+    # See https://github.com/PyCQA/pycodestyle/issues/373
+    "E203",
+    # Allow Multi-line docstring summary not starting at the first line
+    "D212",
+    # Conflicting Linter rules with formatter: https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812",
+    "ISC001",
+    # Mutable class attributes should be annotated with `typing.ClassVar`
+    # false positives in django admin
+    "RUF012",
+    # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
+    "S101",
+    # collapsible-if: https://docs.astral.sh/ruff/rules/collapsible-if/
+    # sometimes it's better to nest
+    "SIM102",
+    # Checks for uses of isinstance/issubclass that take a tuple
+    # of types for comparison.
+    # Deactivated because it can make the code slow:
+    # https://github.com/astral-sh/ruff/issues/7871
+    "UP038"
+]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+extend-fixable = []
+extend-safe-fixes = []
+unfixable = [
+    # Disable autofix for unused imports (`F401`).
+    "F401",
+    # Disable autofix for unused variables (`F841`).
+    "F841",
+]
+extend-unfixable = []
+# The fixes in extend-unsafe-fixes will require
+# provide the `--unsafe-fixes` flag when fixing.
+extend-unsafe-fixes = [
+    "UP038",
+]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+logger-objects = []
+typing-modules = []
+task-tags = ["TODO", "FIXME"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.*" = [
+    # Unused method argument
+    "ARG002",
+    # Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`
+    "ANN401",
+    # Missing docstring in public module
+    "D100",
+    # Missing docstring in public class
+    "D101",
+    # Missing docstring in public package
+    "D104",
+    # One-line docstring should fit on one line
+    "D200",
+    # blank-line-after-summary
+    "D205",
+    # magic-value-comparison
+    "PLR2004",
+    # allow `assert` usage
+    "S101",
+    # Possible hardcoded password assigned to argument
+    "S106",
+]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-values-type = "tuple"
+
+# qa::ruff: lint flake8-quotes settings
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
+multiline-quotes = "double"
+
+# qa::ruff: lint flake8-tidy-imports settings
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow relative imports of parent module or beyond .
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.TypedDict".msg = "Use typing_extensions.TypedDict instead."
+
+# qa::ruff: lint flake8-type-checking settings
+[tool.ruff.lint.flake8-type-checking]
+strict = true
+exempt-modules = ["typing", "typing_extensions"]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+runtime-evaluated-decorators = ["pydantic.validate_call"]
+
+# qa::ruff: flake8-unused-arguments
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.isort]
+case-sensitive = false
+detect-same-package = false
+force-sort-within-sections = false
+from-first = false
+lines-after-imports = 2
+extra-standard-library = ["typing_extensions"]
+known-first-party = []
+known-local-folder = ["config", "core", "themoneyapp"]
+order-by-type = false
+relative-imports-order = "closest-to-furthest"
+section-order = [
+    "future",
+    "standard-library",
+    "django",
+    "third-party",
+    "third-party-test",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.lint.isort.sections]
+# Group all Django imports into a separate section.
+"django" = ["django"]
+"third-party-test" = ["django.test", "pytest", "_pytest", "pytest_django"]
+"tests" = ["tests"]
+
+[tool.ruff.lint.mccabe]
+# Flag errors (`C901`) whenever the complexity level exceeds 10.
+max-complexity = 10
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    # Allow Pydantic's `@validator` decorator to trigger class method treatment.
+    "pydantic.validator",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+# qa::ruff: lint pydocstyle settings
+[tool.ruff.lint.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"
+ignore-decorators = ["typing.overload"]
+
+[tool.ruff.lint.pyflakes]
+extend-generics = ["django.db.models.ForeignKey"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = false
+
+# ----------------------------------------------------------------------------------------------------------------------

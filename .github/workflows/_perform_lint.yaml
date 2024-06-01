@@ -1,0 +1,55 @@
+name: Perform Lint
+
+on:
+  workflow_call:
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHON_VERSION: "3.10"
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # https://github.com/snok/install-poetry
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --only main,dev,qa --no-interaction --no-root
+
+      - name: ruff-lint
+        run: |
+          poetry run ruff check \
+            --config pyproject.toml \
+            --diff \
+            --output-format=full \
+            --exit-non-zero-on-fix
+
+      - name: djlint-lint
+        run: poetry run djlint . --lint
+
+      - name: mypy
+        run: |
+          poetry run mypy .

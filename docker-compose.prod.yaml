@@ -1,0 +1,142 @@
+services:
+  app:
+    container_name: app
+    hostname: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12}
+        PYTHON_IMAGE_VARIANT: ${PYTHON_IMAGE_VARIANT:-slim-bookworm}
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app-migrate:
+        condition: service_completed_successfully
+    networks:
+      - dbnet
+      - mailnet
+      - redisnet
+    ports:
+      - 8000:8000
+    env_file:
+      - ./env.example
+    volumes:
+      # to store the logs
+      - ./.data/logs/app:/data/logs
+
+  worker:
+    container_name: worker
+    hostname: worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12}
+        PYTHON_IMAGE_VARIANT: ${PYTHON_IMAGE_VARIANT:-slim-bookworm}
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app-migrate:
+        condition: service_completed_successfully
+    networks:
+      - dbnet
+      - mailnet
+      - redisnet
+    command: /scripts/worker
+    env_file:
+      - ./env.example
+    volumes:
+      # to store the logs
+      - ./.data/logs/worker:/data/logs
+
+  app-migrate:
+    container_name: app-migrate
+    hostname: app-migrate
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12}
+        PYTHON_IMAGE_VARIANT: ${PYTHON_IMAGE_VARIANT:-slim-bookworm}
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    networks:
+      - dbnet
+      - mailnet
+    command: /scripts/migrate
+    env_file:
+      - ./env.example
+    volumes:
+      # to store the logs
+      - ./.data/logs/app:/data/logs
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: themoneyapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    networks:
+      - dbnet
+
+  redis:
+    image: redis:alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - redisnet
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    volumes:
+      - ./.mailpit:/data
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "8025:8025"
+    networks:
+      - mailnet
+
+networks:
+  dbnet:
+    driver: bridge
+
+  mailnet:
+    driver: bridge
+
+  redisnet:
+    driver: bridge

@@ -1,0 +1,100 @@
+name: Perform Test
+
+on:
+  workflow_call:
+
+jobs:
+  docker-tests:
+    name: Python ${{ matrix.python-version }}-${{ matrix.platform }} tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        python-image-variant: ["slim-bookworm"]
+        platform:
+          - linux/amd64
+          - linux/arm/v7
+          - linux/arm64/v8
+
+    # external services required for the applications
+    services:
+      postgres:
+        image: postgres:16-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_db
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+        env:
+          MP_SMTP_AUTH_ACCEPT_ANY: 1
+          MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+    env:
+      DOCKER_IMAGE_TAG: themoneyapp_test:test
+      DOCKER_TARGET_PLATFORM: ${{ matrix.platform }}
+      PYTHON_VERSION: ${{ matrix.python-version }}
+      PYTHON_IMAGE_VARIANT: ${{ matrix.python-image-variant }}
+      DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app_db?sslmode=disable"
+      REDIS_URL: "redis://localhost:6379/0"
+      EMAIL_HOST: mailpit
+      EMAIL_PORT: 1025
+
+    steps:
+      - name: Prepare
+        run: |
+          platform=${{ env.DOCKER_TARGET_PLATFORM }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # https://github.com/docker/build-push-action
+      - name: Build and export the image to docker
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: test
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            PYTHON_IMAGE_VARIANT=${{ env.PYTHON_IMAGE_VARIANT }}
+          platforms: ${{ env.DOCKER_TARGET_PLATFORM }}
+          load: true
+          push: false
+          tags: ${{ env.DOCKER_IMAGE_TAG }}
+          cache-from: type=gha,scope=build-${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_PAIR }}-${{ hashFiles('**/poetry.lock') }}
+          cache-to: type=gha,scope=build-${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_PAIR }}-${{ hashFiles('**/poetry.lock') }},mode=max
+
+      - name: Execute test
+        run: bash .ci/tests/test_build.sh
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test Results (Python ${{ matrix.python-version }}-${{ env.PLATFORM_PAIR }})
+          path: |
+            .pytest/pytest_coverage_python*.xml
+            .pytest/pytest_coverage_python*.txt
+            .pytest/pytest_python*.xml
+            .pytest/pytest_results*.xml

@@ -1,0 +1,98 @@
+name: Perform Format
+
+on:
+  workflow_call:
+    inputs:
+      apply_changes:
+        description: "should apply changes in a new commit "
+        required: true
+        type: boolean
+
+    # Map the workflow outputs to job outputs
+    outputs:
+      new_sha:
+        description: "The SHA for the new commit made"
+        value: ${{ jobs.formatter.outputs.SHA }}
+
+jobs:
+  formatter:
+    name: Beautify
+    runs-on: ubuntu-latest
+
+    outputs:
+      SHA: ${{ steps.sha.outputs.SHA }}
+
+    permissions:
+      id-token: write
+      contents: write
+
+    env:
+      PYTHON_VERSION: "3.10"
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # https://github.com/snok/install-poetry
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --only main,dev,qa --no-interaction --no-root
+
+      - name: prettier
+        run: |
+          poetry run pre-commit run prettier --all-files || { exit 0; }
+
+      - name: ruff-format
+        run: poetry run ruff format
+
+      - name: djlint
+        run: poetry run djlint . --reformat
+
+      - name: Check if there are any changes
+        id: verify_diff
+        run: |
+          git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Raise error for fork pull requests
+        if: inputs.apply_changes == false && steps.verify_diff.outputs.changed == 'true'
+        run: |
+          echo "::group::git diff with fixes"
+          git --no-pager diff .
+          echo "::endgroup::"
+          echo "::error::Files with invalid formatting found. Check above for fixes."
+          exit 1;
+
+      - name: Commit and push changes
+        if: inputs.apply_changes == true && steps.verify_diff.outputs.changed == 'true'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "chore(qa): code formatted automatically (${{ github.sha }}) [skip ci]"
+          git push
+
+      - name: Get new SHA
+        id: sha
+        run: |
+          new_sha=$(git rev-parse HEAD)
+          echo "SHA=$new_sha" >> $GITHUB_OUTPUT

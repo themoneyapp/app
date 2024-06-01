@@ -1,0 +1,153 @@
+services:
+  webpack:
+    container_name: webpack
+    hostname: webpack
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client-base
+    image: themoneyapp_dev_webpack
+    depends_on:
+      - app
+    networks:
+      - appnet
+    ports:
+      - 8000:3000
+    command: ["npm", "run", "dev:webpack"]
+    volumes:
+      - .:/app:z
+      # http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html
+      - ./node_modules:/app/node_modules
+
+  app: &app
+    container_name: app
+    hostname: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.12}
+        PYTHON_IMAGE_VARIANT: ${PYTHON_IMAGE_VARIANT:-slim-bookworm}
+    image: themoneyapp_dev_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app-migrate:
+        condition: service_completed_successfully
+    networks:
+      - appnet
+      - dbnet
+      - mailnet
+      - redisnet
+    # ports:
+    #   - 8000:8000
+    command: /scripts/start_dev
+    env_file:
+      - ./env.example
+      - ./.dev.env
+    volumes:
+      - ./src:/app/src
+      - ./webpack-stats.json:/app/webpack-stats.json
+      # to store the logs
+      # - ./.data/logs/app:/data/logs
+      # to store the pytest reports
+      # - ./.pytest:/app/.pytest
+
+  worker:
+    <<: *app
+    container_name: worker
+    hostname: worker
+    image: themoneyapp_dev_worker
+    networks:
+      - dbnet
+      - mailnet
+      - redisnet
+    command: /scripts/celery_dev
+    volumes:
+      - ./src:/app/src
+      # to store the logs
+      # - ./.data/logs/worker:/data/logs
+
+  app-migrate:
+    <<: *app
+    container_name: app-migrate
+    hostname: app-migrate
+    image: themoneyapp_dev_app_migrate
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    networks:
+      - dbnet
+      - mailnet
+    command: /scripts/migrate
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: themoneyapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    networks:
+      - dbnet
+
+  redis:
+    image: redis:alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - redisnet
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    volumes:
+      - ./.mailpit:/data
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "8025:8025"
+    networks:
+      - mailnet
+
+networks:
+  appnet:
+    driver: bridge
+
+  dbnet:
+    driver: bridge
+
+  mailnet:
+    driver: bridge
+
+  redisnet:
+    driver: bridge
