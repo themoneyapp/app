@@ -86,7 +86,7 @@ jobs:
           cache-to: type=gha,scope=build-${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_PAIR }}-${{ hashFiles('**/poetry.lock') }},mode=max
 
       - name: Execute test
-        run: bash .ci/tests/test_build.sh
+        run: bash .ci/tests/test_docker.sh
 
       - name: Upload Test Results
         if: always()
