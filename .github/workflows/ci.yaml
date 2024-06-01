@@ -7,8 +7,6 @@ on:
   push:
     branches:
       - develop
-    branches-ignore:
-      - main
     paths-ignore: ["docs/**"]
 
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-a-fallback-value
