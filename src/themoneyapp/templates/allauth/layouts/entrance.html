@@ -1,31 +1,45 @@
-{% extends "themoneyapp/_base.html" %}
+{% extends "_layouts/main.html" %}
 
 {% load i18n %}
+{% load static %}
 
-{% block css %}
-  {{ block.super }}
-{% endblock css %}
 {% block title %}
+
   {% block head_title %}
     {% trans "Sign In" %}
   {% endblock head_title %}
 {% endblock title %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static 'themoneyapp/js/auth.js' %}" defer></script>
+{% endblock javascript %}
+
 {% block body %}
-  <div class="d-flex justify-content-center h-100 py-4">
-    <div class="col-md-4 py-4 my-4 px-4">
+  {% with show_footer=False %}{{ block.super }}{% endwith %}
+{% endblock body %}
+
+{% block main_content %}
+  <div class="flex flex-col items-center justify-center px-6 pt-8 mx-auto md:h-screen pt:mt-0 dark:bg-gray-900">
+    <a href="#"
+       class="flex items-center justify-center mb-8 text-2xl font-semibold lg:mb-10 dark:text-white">
+      <img src="{% static 'images/logo.svg' %}"
+           class="mr-4 h-11"
+           alt="FlowBite Logo" />
+      <span>Flowbite</span>
+    </a>
+    <div class="w-full max-w-xl p-6 space-y-8 sm:p-8 bg-white rounded-lg shadow dark:bg-gray-800 allauth-form-container">
       {% if messages %}
         {% for message in messages %}
-          <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"
-                    aria-label="Close"></button>
-          </div>
+
+          {% include "_components/alert.html" with level=message.level_tag message=message %}
+
         {% endfor %}
       {% endif %}
+
       {% block content %}
       {% endblock content %}
+
     </div>
   </div>
-{% endblock body %}
+{% endblock main_content %}

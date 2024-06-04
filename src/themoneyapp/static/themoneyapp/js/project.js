@@ -2,3 +2,6 @@
 import "../css/style.css";
 
 /* Project specific Javascript goes here. */
+
+import "./sidebar";
+import "./dark-mode";

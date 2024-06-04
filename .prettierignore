@@ -7,4 +7,4 @@
 CHANGELOG.md
 
 # Ignore all django HTML files:
-src/**/templates/**/*.html
+*.html

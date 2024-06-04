@@ -247,7 +247,9 @@ ignore_errors = true
 # ----------------------------------------------------------------------------------------------------------------------
 # qa::djlint https://www.djlint.com/docs/configuration/
 [tool.djlint]
-blank_line_after_tag = "load,extends"
+blank_line_after_tag = "load,extends,include,endblock"
+blank_line_before_tag = "block,include"
+custom_blocks = "element,slot,setvar"
 close_void_tags = true
 format_css = true
 format_js = true

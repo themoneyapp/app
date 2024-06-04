@@ -6,13 +6,9 @@
                       {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
                       {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
                       {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
-                      class="btn
-{% if 'success' in attrs.tags %}btn-success
-{% elif 'warning' in attrs.tags %}btn-warning
-{% elif 'secondary' in attrs.tags %}btn-secondary
-{% elif 'danger' in attrs.tags %}btn-danger
-{% elif 'primary' in attrs.tags %}btn-primary
-{% else %}btn-primary
+                      class="
+{% if attrs.href %}text-primary-700 hover:underline dark:text-primary-500
+{% else %}w-full px-5 py-3 text-base font-medium text-center text-white bg-primary-700 rounded-lg hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 sm:w-auto dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800
 {% endif %}"
 >
   {% slot %}

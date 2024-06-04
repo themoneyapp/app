@@ -92,6 +92,10 @@ module.exports = {
     "shadow-lg",
     "bg-opacity-50",
     "dark:bg-opacity-80",
+    {
+      pattern: /(bg|text)-(red|green|blue|yellow|gray)-.+/,
+      variants: ["lg", "hover", "focus", "lg:hover", "dark"],
+    },
   ],
   plugins: [require("flowbite/plugin")],
 };

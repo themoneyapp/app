@@ -1,0 +1,33 @@
+{% load allauth %}
+
+{% setvar color %}
+  blue
+{% endsetvar %}
+{% setvar color_dark_weight %}
+  400
+{% endsetvar %}
+{% if level == "error" %}
+  {% setvar color %}
+    red
+  {% endsetvar %}
+{% elif level == "success" %}
+  {% setvar color %}
+    green
+  {% endsetvar %}
+{% elif level == "warning" %}
+  {% setvar color %}
+    yellow
+  {% endsetvar %}
+  {% setvar color_dark_weight %}
+    300
+  {% endsetvar %}
+{% elif level == "debug" %}
+  {% setvar color %}
+    gray
+  {% endsetvar %}
+  {% setvar color_dark_weight %}
+    300
+  {% endsetvar %}
+{% endif %}
+<div class="p-4 mb-4 text-sm text-{{ color }}-800 rounded-lg bg-{{ color }}-50 dark:bg-gray-800 dark:text-{{ color }}-{{ color_dark_weight }}"
+     role="alert">{{ message }}</div>

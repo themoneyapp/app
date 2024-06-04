@@ -424,7 +424,7 @@ ADMINS = [
 MANAGERS = ADMINS
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
 # Force the `admin` sign in process to go through the `django-allauth` workflow
-DJANGO_ADMIN_FORCE_ALLAUTH = False
+DJANGO_ADMIN_FORCE_ALLAUTH = True
 
 
 # LOGGING
@@ -516,6 +516,13 @@ CELERY_EVENT_QUEUE_TTL = app_settings.CELERY_EVENT_QUEUE_TTL
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_ALLOW_REGISTRATION = app_settings.ACCOUNT_ALLOW_REGISTRATION
 ACCOUNT_AUTHENTICATION_METHOD = "email"
+# the user is automatically logged out by amere GET request.
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "phone_number"
+# removes the remember field from the login form
+ACCOUNT_SESSION_REMEMBER = False
+# Before asking the user to reauthenticate
+ACCOUNT_REAUTHENTICATION_TIMEOUT = 30
 ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
@@ -525,8 +532,9 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_REAUTHENTICATION_REQUIRED = True
 ACCOUNT_CHANGE_EMAIL = True
 ACCOUNT_CONFIRM_EMAIL_ON_GET = False
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
 ACCOUNT_EMAIL_NOTIFICATIONS = True
-ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = True
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 ACCOUNT_ADAPTER = "themoneyapp.users.adapters.AccountAdapter"
 ACCOUNT_FORMS = {

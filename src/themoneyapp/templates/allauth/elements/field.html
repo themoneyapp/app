@@ -5,61 +5,90 @@
     <div class="col-sm-10">
       <label for="{{ attrs.id }}">
         {% slot label %}
-      {% endslot %}
-    </label>
+        {% endslot %}
+      </label>
+    </div>
+    <textarea {% if attrs.required %}required{% endif %}
+              {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %}
+              {% if attrs.disabled %}disabled{% endif %}
+              {% if attrs.readonly %}readonly{% endif %}
+              {% if attrs.checked %}checked{% endif %}
+              {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+              {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+              {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+              class="form-control">{% slot value %}{% endslot %}</textarea>
   </div>
-  <textarea {% if attrs.required %}required{% endif %}
-            {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %}
-            {% if attrs.disabled %}disabled{% endif %}
-            {% if attrs.readonly %}readonly{% endif %}
-            {% if attrs.checked %}checked{% endif %}
-            {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
-            {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
-            {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
-            class="form-control">{% slot value %}{% endslot %}</textarea>
-</div>
 {% elif attrs.type == "radio" %}
-<div class="row mb-3">
-  <div class="col-sm-10">
-    <div class="form-check">
+  <div class="row mb-3">
+    <div class="col-sm-10">
+      <div class="form-check">
+        <input {% if attrs.required %}required{% endif %}
+               {% if attrs.disabled %}disabled{% endif %}
+               {% if attrs.readonly %}readonly{% endif %}
+               {% if attrs.checked %}checked{% endif %}
+               {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+               {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+               {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+               {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
+               value="{{ attrs.value|default_if_none:"" }}"
+               type="{{ attrs.type }}" />
+        <label class="form-check-label" for="{{ attrs.id }}">
+          {% slot label %}
+          {% endslot %}
+        </label>
+      </div>
+    </div>
+  </div>
+{% elif attrs.type == "checkbox" %}
+  <div class="flex items-start">
+    <div class="flex items-center h-5">
       <input {% if attrs.required %}required{% endif %}
              {% if attrs.disabled %}disabled{% endif %}
              {% if attrs.readonly %}readonly{% endif %}
              {% if attrs.checked %}checked{% endif %}
+             {% if attrs.name %}aria-describedby="{{ attrs.name }}"{% endif %}
              {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
              {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
              {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
              {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
              value="{{ attrs.value|default_if_none:"" }}"
-             type="{{ attrs.type }}" />
-      <label class="form-check-label" for="{{ attrs.id }}">
+             type="{{ attrs.type }}"
+             class="w-4 h-4 border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600" />
+    </div>
+    <div class="ml-3 text-sm">
+      <label for="{{ attrs.id }}"
+             class="font-medium text-gray-900 dark:text-white">
         {% slot label %}
+        {% endslot %}
+      </label>
+    </div>
+  </div>
+{% else %}
+  <div>
+    <label for="{{ attrs.id }}"
+           class="block mb-2 text-sm font-medium {% if attrs.errors %}text-red-700 dark:text-red-500 {% else %}text-gray-900 dark:text-white {% endif %} ">
+      {% slot label %}
       {% endslot %}
     </label>
+    <input {% if attrs.required %}required{% endif %}
+           {% if attrs.disabled %}disabled{% endif %}
+           {% if attrs.readonly %}readonly{% endif %}
+           {% if attrs.checked %}checked{% endif %}
+           {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+           {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+           {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+           {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
+           value="{{ attrs.value|default_if_none:"" }}"
+           type="{{ attrs.type }}"
+           class="border sm:text-sm rounded-lg block w-full p-2.5 {% if attrs.errors %}bg-red-50 border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500 {% else %}bg-gray-50 border-gray-300 text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 {% endif %}" />
+    {% if attrs.errors %}
+      {% for error in attrs.errors %}<p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ error }}</p>{% endfor %}
+    {% endif %}
+    {% if slots.help_text %}
+      <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        {% slot help_text %}
+        {% endslot %}
+      </div>
+    {% endif %}
   </div>
-</div>
-</div>
-{% else %}
-<div class="col-sm-10">
-  <label for="{{ attrs.id }}">
-    {% slot label %}
-  {% endslot %}
-</label>
-</div>
-<div class="col-sm-10">
-  <input {% if attrs.required %}required{% endif %}
-         {% if attrs.disabled %}disabled{% endif %}
-         {% if attrs.readonly %}readonly{% endif %}
-         {% if attrs.checked %}checked{% endif %}
-         {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
-         {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
-         {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
-         {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
-         value="{{ attrs.value|default_if_none:"" }}"
-         type="{{ attrs.type }}"
-         class="form-control" />
-</div>
-{% endif %}
-{% if slots.help_text %}
-  <div class="form-text">{% slot help_text %}{% endslot %}</div>
 {% endif %}

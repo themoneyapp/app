@@ -46,6 +46,7 @@ repos:
     hooks:
       - id: prettier
         args: ["--config", "package.json"]
+        exclude_types: [html]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.4.5"

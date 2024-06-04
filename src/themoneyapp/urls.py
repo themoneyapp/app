@@ -1,13 +1,16 @@
 """URLs for themoneyapp application."""
 
 from django.urls import path
-from django.views.generic import TemplateView
+
+from themoneyapp.core.views import ProtectedTemplateView
 
 
 app_name = "themoneyapp"
 
 urlpatterns = [
     path(
-        "", TemplateView.as_view(template_name="themoneyapp/index.html"), name="index"
+        "",
+        ProtectedTemplateView.as_view(template_name="themoneyapp/index.html"),
+        name="index",
     ),
 ]
