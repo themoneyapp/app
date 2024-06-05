@@ -1,5 +1,5 @@
 exclude: "^docs/|/migrations/|devcontainer.json|^CHANGELOG.md$"
-default_stages: [pre-commit, pre-merge-commit, pre-push, manual]
+default_stages: [pre-commit, pre-merge-commit, manual]
 
 default_language_version:
   python: python3.10
