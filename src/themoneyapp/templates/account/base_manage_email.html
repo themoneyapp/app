@@ -1,0 +1,5 @@
+{% extends "allauth/layouts/manage.html" %}
+
+{% block body %}
+  {% with page_slug="account_email" %}{{ block.super }}{% endwith %}
+{% endblock body %}

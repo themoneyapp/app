@@ -1,0 +1,20 @@
+{% extends "_layouts/dashboard.html" %}
+
+{% load i18n %}
+
+{% block title %}
+
+  {% block head_title %}
+    {% trans "Account" %}
+  {% endblock head_title %}
+{% endblock title %}
+
+{% block body %}
+  {% with group="account_manage" %}{{ block.super }}{% endwith %}
+{% endblock body %}
+
+{% block main_content %}
+
+  {% block content %}
+  {% endblock content %}
+{% endblock main_content %}

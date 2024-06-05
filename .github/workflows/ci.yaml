@@ -1,0 +1,60 @@
+name: Checks
+
+on:
+  pull_request:
+    paths-ignore: ["docs/**"]
+
+  push:
+    branches:
+      - develop
+    paths-ignore: ["docs/**"]
+
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-a-fallback-value
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-only-cancel-in-progress-jobs-or-runs-for-the-current-workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Perform Test
+    uses: ./.github/workflows/_perform_test.yaml
+
+  lint:
+    name: Perform Lint
+    uses: ./.github/workflows/_perform_lint.yaml
+
+  format:
+    name: Perform Format
+    needs: [lint]
+
+    if: github.repository == 'themoneyapp/app'
+
+    uses: ./.github/workflows/_perform_format.yaml
+    secrets: inherit
+    with:
+      # only apply changes on push events or pull requets from the same repo
+      apply_changes: ${{ ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name) || github.repository) == 'themoneyapp/app' }}
+
+  event_file:
+    name: Upload Event File
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Upload event file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
+
+  commitlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # https://github.com/wagoid/commitlint-github-action
+      - uses: wagoid/commitlint-github-action@v6

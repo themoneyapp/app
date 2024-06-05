@@ -1,0 +1,23 @@
+name: Perform Pre-Commit
+
+on:
+  workflow_call:
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      # TODO: Consider using pre-commit.ci for open source project
+      # https://github.com/pre-commit/action
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1

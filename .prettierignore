@@ -1,0 +1,10 @@
+**/.git
+**/.svn
+**/.hg
+**/node_modules
+
+# ignore changelog files
+CHANGELOG.md
+
+# Ignore all django HTML files:
+*.html

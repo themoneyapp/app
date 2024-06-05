@@ -1,0 +1,10 @@
+.editorconfig
+.gitattributes
+.git
+.github
+.gitignore
+.pre-commit-config.yaml
+ci
+**/.idea
+**/.mypy_cache
+**/.ruff_cache

@@ -1,0 +1,14 @@
+services:
+  docs:
+    image: themoneyapp_dev_docs
+    container_name: themoneyapp_dev_docs
+    build:
+      context: .
+      dockerfile: ./docker/docs/Dockerfile
+    env_file:
+      - ./env.example
+    volumes:
+      - .:/app:z
+    ports:
+      - 9000:9000
+    command: /start-docs
